@@ -1,0 +1,330 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view = $ctrl->view;
+$cnd  = $ctrl->dat['cnd'];
+$list = $ctrl->dat['list'];
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next:           null,
+        func:           null,
+        act:            null,
+        mid:            null,
+        cnd_name:       null,
+        cnd_login_id:   null,
+        page_curr:      null,
+        v_cnd_name:     null,
+        v_cnd_login_id: null,
+        v_page_curr:    null,
+        v_page_last:    null,
+
+        gotoNext: function(func) {
+            this.func.val(func);
+            this.act.val('');
+            this.next.submit();
+            return false;
+        },
+
+        create: function() {
+            this.func.val('Account');
+            this.act.val('create');
+            this.next.submit();
+            return false;
+        },
+
+        drop: function(login_id, aid, mid) {
+
+            var msg = '';
+
+            if (!confirm("アカウント " + login_id + " を削除しますか？")) {
+                return false;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func': 'Account',
+                    'act':  'drop',
+                    'aid':  aid,
+                    'mid':  mid,
+                    'eod':  ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                alert(this.ans.err);
+                return false;
+            }
+
+            this.gotoNext('Account', 'remember');
+
+            return false;
+        },
+
+        edit: function(mid) {
+            this.func.val('Account');
+            this.act.val('edit');
+            this.mid.val(mid);
+            this.next.submit();
+            return false;
+        },
+
+        move: function(dlt) {
+
+            var curr = this.v_page_curr.val() * 1;
+            var last = this.v_page_last.val() * 1;
+            var next;
+
+            switch (dlt) {
+                case -9: next = 1;          break;
+                case  9: next = last;       break;
+                default: next = curr + dlt; break;
+            }
+
+            if (next > last) {
+                next = last;
+            }
+
+            if (next < 1) {
+                next = 1;
+            }
+
+            this.v_page_curr.val(next);
+            this.search();
+
+            return false;
+        },
+
+        search: function() {
+
+            if (this.v_page_curr.val() < 1) {
+                this.v_page_curr.val(1);
+            }
+
+            this.func.val('Account');
+            this.act.val('search');
+            this.cnd_name.val(this.v_cnd_name.val());
+            this.cnd_login_id.val(this.v_cnd_login_id.val());
+            this.page_curr.val(this.v_page_curr.val());
+            this.next.submit();
+            return false;
+        },
+
+        reset: function() {
+            this.v_cnd_name.val('');
+            this.v_cnd_login_id.val('');
+            this.v_page_curr.val(1);
+            return false;
+        },
+
+        init: function() {
+            this.next           = $('#next');
+            this.func           = $('#func');
+            this.act            = $('#act');
+            this.mid            = $('#mid');
+            this.cnd_name       = $('#cnd_name');
+            this.cnd_login_id   = $('#cnd_login_id');
+            this.page_curr      = $('#page_curr');
+            this.v_cnd_name     = $('#v_cnd_name');
+            this.v_cnd_login_id = $('#v_cnd_login_id');
+            this.v_page_curr    = $('#v_page_curr');
+            this.v_page_last    = $('#v_page_last');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func"         id="func">
+    <input type="hidden" name="act"          id="act" >
+    <input type="hidden" name="cnd_name"     id="cnd_name" >
+    <input type="hidden" name="cnd_login_id" id="cnd_login_id" >
+    <input type="hidden" name="page_curr"    id="page_curr" >
+    <input type="hidden" name="mid"          id="mid" >
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('RootMenu');">root用メニュー</a>
+            &nbsp;&gt;&nbsp;アカウント
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login');">ログアウト</button>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+	                <th class="my_border">アカウント</th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table class="my_table" width="100%">
+                <tr>
+	                <th colspan="3" class="my_border">絞込み検索</th>
+                </tr>
+                <tr>
+	                <td class="my_border" style="text-align: center; width: 110px;" rowspan="2">
+                        <table class="my_table" cellpadding="0" cellspacing="2">
+		                    <tr>
+			                    <td>
+                                    <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.search();">検索</button>
+                                </td>
+                            </tr>
+		                    <tr>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 100px;" onclick="return my.reset();">検索リセット</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+	                <th class="my_border" style="width: 100px;">名称</th>
+	                <td class="my_border">
+                        <input id="v_cnd_name" type="text" value="<?= $view->str($cnd['cnd_name']) ?>" size="20" style="text-align: left;">
+	                </td>
+                </tr>
+                <tr>
+	                <th class="my_border">アカウント</th>
+	                <td class="my_border">
+                        <input id="v_cnd_login_id" type="text" value="<?= $view->str($cnd['cnd_login_id']) ?>" size="20" style="text-align: left;">
+	                </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table class="my_table" width="100%">
+                <tr>
+	                <td class="my_border" id="my_create">
+                        <button type="button" class="my_cyan" style="width: 150px;" onclick="return my.create();">新アカウント作成</button>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 2px;">&nbsp;</div>
+
+            <table width="100%">
+                <tr>
+	                <td style="text-align: left; width: 20%;">全件数:<?= $list['cnt'] ?>[件]</td>
+<?php
+if ($list['cnt'] < 1) {
+?>
+	                <td style="visibility: hidden;">
+<?php
+} else {
+?>
+	                <td style="text-align: center;">
+<?php
+}
+?>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(-9);">|&lt;</button>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(-1);">&lt;</button>
+                        <input id="v_page_last" type="hidden" value="<?= $list['last'] ?>">
+                        <input id="v_page_curr" style="text-align: right;" type="text" size="4" value="<?= $list['page'] ?>">/<?= $list['last'] ?>[ページ]
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(1);">&gt;</button>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(9);">&gt;|</button>
+                    </td>
+                    <td style="text-align: right; left; width: 20%;">
+                        表示数:<?= $list['rpp'] ?>[件/ページ]
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 2px;">&nbsp;</div>
+
+            <table class="my_list">
+                <thead>
+                    <tr>
+                        <th>&nbsp;</th>
+                        <th>連番</th>
+                        <th>名称</th>
+                        <th>アカウント</th>
+                        <th>ロール</th>
+                        <th>電子メール</th>
+                        <th>電話番号</th>
+                        <th>削除</th>
+                    </tr>
+                </thead>
+                <tbody>
+<?php
+if ($list['cnt'] < 1) {
+?>
+                    <tr>
+                        <td colspan="8">データなし</td>
+                    </tr>
+<?php
+} else {
+    $i = ($list['page'] - 1) * $list['rpp'];
+    foreach ($list['rec'] as $rec) {
+
+        $i++;
+
+        $aid      = $rec['aid'];
+        $mid      = $rec['mid'];
+        $name     = $view->str($rec['name']);
+        $login_id = $view->str($rec['login_id']);
+        $role     = $view->str($rec['role']);
+        $email    = $view->str($rec['email']);
+        $tel      = $view->str($rec['tel']);
+?>
+                    <tr>
+                        <td style="text-align: center;">
+                            <button type="button" class="my_green" onclick="return my.edit('<?= $mid ?>');">編集</button>
+                        </td>
+                        <td style="text-align: right;"><?= $i ?></td>
+                        <td><?= $name ?></td>
+                        <td><?= $login_id ?></td>
+                        <td><?= $role ?></td>
+                        <td><?= $email ?></td>
+                        <td><?= $tel ?></td>
+<?php
+        if ($rec['login_id'] == 'root') {
+?>
+                        <td>&nbsp;</td>
+<?php
+        } else {
+?>
+                        <td>
+                            <button type="button" class="my_magenta" onclick="return my.drop('<?= $login_id ?>', '<?= $aid ?>', '<?= $mid ?>');">削除</button>
+                        </td>
+<?php
+        }
+?>
+                    </tr>
+<?php
+    }
+}
+?>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>

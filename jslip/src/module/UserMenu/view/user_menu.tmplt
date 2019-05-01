@@ -1,0 +1,322 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$basic = $ctrl->dat['basic'];
+$err   = (empty($ctrl->dat['err'])) ? [] : $ctrl->dat['err'];
+$bid   = $_SESSION['minfo']['bid'];
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next:  null,
+        func:  null,
+        act:   null,
+        bid:   null,
+        v_bid: null,
+        err:   <?php echo json_encode($err) ?>,
+
+        gotoNext: function(func) {
+            this.func.val(func);
+            this.bid.val(<?= $bid ?>);
+            this.act.val('');
+            this.next.attr('target', '_self');
+            this.next.submit();
+            return false;
+        },
+
+        popup: function(func, act) {
+            if (func == 'UserMenu') {
+                if (act == 'exportCsv') {
+                    if (!confirm('伝票をエクスポートしますか？')) {
+                        return false;
+                    }
+                }
+            }
+            this.func.val(func);
+            this.bid.val(<?= $bid ?>);
+            this.act.val(act);
+            this.next.attr('target', '_blank');
+            this.next.submit();
+
+            return false;
+        },
+
+        useOld: function() {
+
+            if (this.chkJournal()) {
+                return this.useLast();
+            }
+
+            return false;
+        },
+
+        useLast: function() {
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func': 'UserMenu',
+                    'act':  'useLast',
+                    'bid':  '<?= $bid ?>',
+                    'eod':  ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == "NG") {
+                alert(this.ans.err);
+                return -1;
+            }
+
+            if (this.ans.sts == "OK") {
+                alert('昨年度のデータを流用しました。');
+            }
+
+            return false;
+        },
+
+        impdat: function() {
+
+            if (this.chkJournal()) {
+                $('#modalImportCsv').modal();
+            }
+
+            return false;
+        },
+
+        chkJournal: function() {
+
+            var cnt = this.cntJournal();
+
+            if (cnt < 0) {
+                return false;
+            }
+
+            if (cnt > 0) {
+                alert('伝票が入力されています。');
+                return false;
+            }
+
+            return true;
+        },
+
+        cntJournal: function() {
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func': 'UserMenu',
+                    'act':  'cntJournal',
+                    'bid':  '<?= $bid ?>',
+                    'eod':  ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == "NG") {
+                alert(this.ans.err);
+                return -1;
+            }
+
+            return this.ans.cnt;
+        },
+
+        chkErr: function() {
+            for (var i in this.err) {
+                alert("Error : " + i + " : " + this.err[i]);
+            }
+        },
+
+        initPopover: function(id) {
+            $('#' + id).popover({trigger: 'hover'});
+        },
+
+        init: function() {
+
+            this.next  = $('#next');
+            this.func  = $('#func');
+            this.act   = $('#act');
+            this.bid   = $('#bid');
+            this.v_bid = $('#v_bid');
+
+            this.initPopover('userJournal');
+            this.initPopover('userCalc');
+
+            this.initPopover('userAccount');
+            this.initPopover('userBasicInfo');
+            this.initPopover('userSection');
+            this.initPopover('userItem');
+            this.initPopover('userAcitm');
+
+            this.initPopover('userTax');
+            this.initPopover('userEra');
+            this.initPopover('sameOld');
+            this.initPopover('expdat');
+            this.initPopover('impdat');
+
+            this.chkErr();
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+    <input type="hidden" name="bid"  id="bid">
+    <input type="hidden" name="act"  id="act">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td align="left">&nbsp;メニュー</td>
+        <td align="right">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login'); ">ログアウト</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" align="center">
+            <?php echo $view->strBasic($basic[0]); ?>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<table width="100%">
+<?php
+$btn_atr1 = 'class="my_cyan" style="width: 200px; height: 30px;"';
+$btn_atr2 = 'class="my_cyan" style="width: 430px; height: 30px;"';
+?>
+    <tr>
+        <td align="center">
+            <table>
+                <tr>
+                    <td colspan="3" style="padding: 2px;">
+                        <button type="button" <?= $btn_atr2 ?> onclick="return my.gotoNext('UserJournal');" id="userJournal" data-toggle="popover" title="仕訳帳（伝票処理）" data-content="複式簿記のための伝票を入力します。">仕訳帳（伝票処理）</button>
+                    </td>
+
+                </tr>
+                <tr>
+                    <td colspan="3" style="padding: 2px;">
+                        <button type="button" <?= $btn_atr2 ?> onclick="return my.gotoNext('UserCalc');" id="userCalc" data-toggle="popover" title="計算処理／帳票処理" data-content="入力された伝票を計算処理し、財務諸表を表示します。">計算処理／帳票処理</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserAccount');" id="userAccount" data-toggle="popover" title="アカウント" data-content="メンバー名 やパスワードを設定します。">アカウント</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserTax');" id="userTax" data-toggle="popover" title="消費税" data-content="税率を設定します。">消費税</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserBasicInfo');" id="userBasicInfo" data-toggle="popover" title="基本情報" data-content="表示名称や年度情報などを設定します。">基本情報</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserEra');" id="userEra" data-toggle="popover" title="年号" data-content="年号を設定します。">年号</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserSection');" id="userSection" data-toggle="popover" title="部門情報" data-content="部門名を設定します。">部門情報</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?>></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?>></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.useOld();" id="sameOld" data-toggle="popover" title="前年度基本データ流用" data-content="前年度の部門情報や科目コードそして勘定コードを流用します。">前年度基本データ流用</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?>></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?>></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserItem');" id="userItem" data-toggle="popover" title="科目コード" data-content="科目コードを設定します。">科目コード</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.popup('UserMenu', 'exportCsv');" id="expdat" data-toggle="popover" title="伝票エクスポート" data-content="当該年度のデータをCSVファイルとしてダウンロードします。">伝票エクスポート</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.gotoNext('UserAcitm');" id="userAcitm" data-toggle="popover" title="勘定コード" data-content="科目コード設定のもととなる勘定コードを設定します。">勘定コード</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 2px;">
+                        <button type="button" <?= $btn_atr1 ?> onclick="return my.impdat();" id="impdat" data-toggle="popover" title="伝票インポート" data-content="指定されたCSVファイルを当該年度のデータとしてインポートします。">伝票インポート></button>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<!-- モーダルダイアログ Import CSV-->
+<div class="modal" id="modalImportCsv" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&#215;</span>
+                </button>
+                <h4 class="modal-import-title">伝票インポート</h4>
+            </div>
+            <div class="modal-body">
+                <form action="<?= $base ?>" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="func" value="UserMenu">
+                    <input type="hidden" name="bid"  value="<?= $bid ?>">
+                    <input type="hidden" name="act"  value="importCsv">
+                    ファイル：<br>
+                    <input type="file" name="upfile" size="30" /><br />
+                    <br />
+                    <input type="submit" value="アップロード" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="my_magenta" data-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>

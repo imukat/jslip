@@ -1,0 +1,127 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next: null,
+        func: null,
+
+        gotoNext: function(func) {
+            this.func.val(func);
+            this.next.submit();
+            return false;
+        },
+
+        init: function() {
+            this.next = $('#next');
+            this.func = $('#func');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td align="left">&nbsp;root用メニュー</td>
+        <td align="right">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login');">ログアウト</button>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                    <td style="width: 20px;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;" onclick="return my.gotoNext('BasicInfo');">基本情報</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;" onclick="return my.gotoNext('Account');">アカウント</button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                    <td style="width: 20pt;"></td>
+                    <td style="padding: 3px;">
+                        <button type="button" class="my_cyan" style="width: 200px; height: 30px;"></button>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

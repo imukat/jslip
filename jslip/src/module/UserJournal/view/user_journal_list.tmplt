@@ -1,0 +1,537 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view    = $ctrl->view;
+$bid     = $ctrl->bid;
+$basic   = $ctrl->basic;
+$kcd     = $ctrl->kcd;
+$section = $ctrl->section;
+$settled = $ctrl->settled;
+$begin   = $ctrl->begin;
+$end     = $ctrl->end;
+$cnd     = $ctrl->dat['cnd'];
+$list    = $ctrl->dat['list'];
+$limit   = $ctrl->dat['limit'];
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next:         null,
+        func:         null,
+        act:          null,
+        id:           null,
+        cnd_scd:      null,
+        cnd_begin:    null,
+        cnd_end:      null,
+        cnd_denpyo:   null,
+        cnd_kcd:      null,
+        cnd_remark:   null,
+        cnd_stflg:    null,
+        cnd_nuflg:    null,
+        page_curr:    null,
+        v_cnd_scd:    null,
+        v_cnd_begin:  null,
+        v_cnd_end:    null,
+        v_cnd_denpyo: null,
+        v_cnd_kcd:    null,
+        v_cnd_remark: null,
+        v_cnd_stflg:  null,
+        v_cnd_nuflg:  null,
+        v_page_curr:  null,
+        v_page_last:  null,
+
+        gotoNext: function(func) {
+            this.func.val(func);
+            this.act.val('');
+            this.next.submit();
+            return false;
+        },
+
+        create: function() {
+            if (this.chk_slip == 'NG') {
+                alert("入力伝票の最大明細数: " + this.max_slip);
+                return false;
+            }
+            this.func.val('UserJournal');
+            this.act.val('create');
+            this.next.submit();
+            return false;
+        },
+
+        drop: function(dno) {
+
+            var msg = '';
+
+            if (!confirm("伝票番号[" + dno + "] を削除しますか？")) {
+                return false;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func': 'UserJournal',
+                    'act':  'drop',
+                    'dno':  dno,
+                    'eod':  ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                alert(this.ans.err);
+                return false;
+            }
+
+            this.gotoNext('UserJournal', 'remember');
+
+            return false;
+        },
+
+        edit: function(id) {
+            this.func.val('UserJournal');
+            this.act.val('edit');
+            this.id.val(id);
+            this.next.submit();
+            return false;
+        },
+
+        duplicate: function(id) {
+            if (this.chk_slip == 'NG') {
+                alert("入力伝票の最大明細数: " + this.max_slip);
+                return false;
+            }
+            this.func.val('UserJournal');
+            this.act.val('duplicate');
+            this.id.val(id);
+            this.next.submit();
+            return false;
+        },
+
+        move: function(dlt) {
+
+            var curr = this.v_page_curr.val() * 1;
+            var last = this.v_page_last.val() * 1;
+            var next;
+
+            switch (dlt) {
+                case -9: next = 1;          break;
+                case  9: next = last;       break;
+                default: next = curr + dlt; break;
+            }
+
+            if (next > last) {
+                next = last;
+            }
+
+            if (next < 1) {
+                next = 1;
+            }
+
+            this.v_page_curr.val(next);
+            this.search();
+
+            return false;
+        },
+
+        search: function() {
+
+            if (this.v_page_curr.val() < 1) {
+                this.v_page_curr.val(1);
+            }
+
+            this.func.val('UserJournal');
+            this.act.val('search');
+            this.cnd_scd.val(this.v_cnd_scd.val());
+            this.cnd_begin.val(this.v_cnd_begin.val());
+            this.cnd_end.val(this.v_cnd_end.val());
+            this.cnd_denpyo.val(this.v_cnd_denpyo.val());
+            this.cnd_kcd.val(this.v_cnd_kcd.val());
+            this.cnd_remark.val(this.v_cnd_remark.val());
+            this.cnd_stflg.val(this.v_cnd_stflg.val());
+            this.cnd_nuflg.val(this.v_cnd_nuflg.val());
+
+            this.page_curr.val(this.v_page_curr.val());
+            this.next.submit();
+            return false;
+        },
+
+        reset: function() {
+            this.v_cnd_scd.val('-1');
+            this.v_cnd_begin.val('<?= $begin ?>');
+            this.v_cnd_end.val('<?= $end ?>');
+            this.v_cnd_denpyo.val('');
+            this.v_cnd_kcd.val('-1');
+            this.v_cnd_remark.val('');
+            this.v_cnd_stflg.val('-2');
+            this.v_cnd_nuflg.val('-1');
+            this.v_page_curr.val(1);
+            return false;
+        },
+
+        init: function() {
+            this.chk_slip     = '<?= $limit['chk_slip'] ?>';
+            this.max_slip     = '<?= $limit['max_slip'] ?>';
+            this.next         = $('#next');
+            this.func         = $('#func');
+            this.act          = $('#act');
+            this.id           = $('#id');
+            this.cnd_scd      = $('#cnd_scd');
+            this.cnd_begin    = $('#cnd_begin');
+            this.cnd_end      = $('#cnd_end');
+            this.cnd_denpyo   = $('#cnd_denpyo');
+            this.cnd_kcd      = $('#cnd_kcd');
+            this.cnd_remark   = $('#cnd_remark');
+            this.cnd_stflg    = $('#cnd_stflg');
+            this.cnd_nuflg    = $('#cnd_nuflg');
+            this.page_curr    = $('#page_curr');
+            this.v_cnd_scd    = $('#v_cnd_scd');
+            this.v_cnd_begin  = $('#v_cnd_begin');
+            this.v_cnd_end    = $('#v_cnd_end');
+            this.v_cnd_denpyo = $('#v_cnd_denpyo');
+            this.v_cnd_kcd    = $('#v_cnd_kcd');
+            this.v_cnd_remark = $('#v_cnd_remark');
+            this.v_cnd_stflg  = $('#v_cnd_stflg');
+            this.v_cnd_nuflg  = $('#v_cnd_nuflg');
+            this.v_page_curr  = $('#v_page_curr');
+            this.v_page_last  = $('#v_page_last');
+
+            this.v_cnd_begin.datepicker();
+            this.v_cnd_end.datepicker();
+            this.v_cnd_begin.val('<?= $cnd['cnd_begin'] ?>');
+            this.v_cnd_end.val('<?= $cnd['cnd_end'] ?>');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func"       id="func">
+    <input type="hidden" name="act"        id="act">
+    <input type="hidden" name="cnd_scd"    id="cnd_scd">
+    <input type="hidden" name="cnd_begin"  id="cnd_begin">
+    <input type="hidden" name="cnd_end"    id="cnd_end">
+    <input type="hidden" name="cnd_denpyo" id="cnd_denpyo">
+    <input type="hidden" name="cnd_kcd"    id="cnd_kcd">
+    <input type="hidden" name="cnd_remark" id="cnd_remark">
+    <input type="hidden" name="cnd_stflg"  id="cnd_stflg">
+    <input type="hidden" name="cnd_nuflg"  id="cnd_nuflg">
+    <input type="hidden" name="page_curr"  id="page_curr">
+    <input type="hidden" name="id"         id="id">
+    <input type="hidden" name="bid"        id="bid" value="<?= $bid ?>">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('UserMenu');">メニュー</a>
+            &nbsp;&gt;&nbsp;仕訳帳
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login');">ログアウト</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: center;">
+            <?= $view->strBasic($basic) ?>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+	                <th class="my_border">仕訳帳</th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table class="my_table" width="100%">
+                <tr>
+	                <th colspan="11" class="my_border">絞込み検索</th>
+                </tr>
+                <tr>
+	                <td class="my_border" style="text-align: center; width: 110px;" rowspan="2">
+                        <table class="my_table" cellpadding="0" cellspacing="2">
+		                    <tr>
+			                    <td>
+                                    <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.search();">検索</button>
+                                </td>
+                            </tr>
+		                    <tr>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 100px;" onclick="return my.reset();">検索リセット</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+	                <th class="my_border">部門</th>
+	                <td class="my_border">
+                        <select id="v_cnd_scd">
+<?php
+$s = ($cnd['cnd_scd'] < 0) ? ' selected' : '';
+?>
+                            <option value="-1"<?= $s ?>>&nbsp;</option>
+<?php
+foreach ($section as $key => $dat) {
+    $k = $view->str($key);
+    $d = $view->str($dat);
+    $s = ($cnd['cnd_scd'] == $k) ? ' selected' : '';
+?>
+                            <option value="<?= $k ?>"<?= $s ?>><?= $d ?></option>
+<?php
+}
+?>
+                        </select>
+	                </td>
+	                <th class="my_border" style="width: 100px;">期間</th>
+	                <td class="my_border" colspan="3">
+                        <input id="v_cnd_begin" type="text">
+                        〜
+                        <input id="v_cnd_end" type="text">
+	                </td>
+	                <th class="my_border" style="width: 100px;">伝票番号</th>
+	                <td class="my_border">
+                        <input id="v_cnd_denpyo" type="text" value="<?= $view->str($cnd['cnd_denpyo']) ?>">
+	                </td>
+                </tr>
+                <tr>
+	                <th class="my_border">科目</th>
+	                <td class="my_border">
+                        <select id="v_cnd_kcd">
+<?php
+$s = ($cnd['cnd_kcd'] < 0) ? ' selected' : '';
+?>
+                            <option value="-1"<?= $s ?>>&nbsp;</option>
+<?php
+$c = '';
+foreach ($kcd as $key => $dat) {
+    $k = $view->str($key);
+    $d = $view->str($dat['name']);
+    $s = ($cnd['cnd_kcd'] == $k) ? ' selected' : '';
+    $p = mb_substr($dat['kana'], 0, 1);
+    if ($c != $p) {
+        if ($c != '') {
+            echo '</optgroup>';
+        }
+        echo '<optgroup label="' . $p . '">';
+        $c = $p;
+    }
+?>
+                            <option value="<?= $k ?>"<?= $s ?>><?= $d ?></option>
+<?php
+}
+if ($c != '') {
+    echo '</optgroup>';
+}
+?>
+                        </select>
+	                </td>
+	                <th class="my_border">摘要</th>
+	                <td class="my_border">
+                        <input id="v_cnd_remark" type="text" value="<?= $view->str($cnd['cnd_remark']) ?>">
+	                </td>
+	                <th class="my_border">通常/決算</th>
+	                <td class="my_border">
+                        <select id="v_cnd_stflg">
+<?php
+$s = ($cnd['cnd_stflg'] < 0) ? ' selected' : '';
+?>
+                            <option value="-2"<?= $s ?>>&nbsp;</option>
+<?php
+foreach ($settled as $k => $d) {
+    $s = ($k == $cnd['cnd_stflg']) ? ' selected' : '';
+    echo '<option value="' . $view->str($k) . '"' . $s . '>' . $view->str($d) . '</option>';
+}
+?>
+                        </select>
+	                </td>
+	                <th class="my_border">使用/不使用</th>
+	                <td class="my_border">
+                        <select id="v_cnd_nuflg">
+<?php
+$nu = ['-1' => '', '0' => '使用伝票', '1' => '不使用伝票'];
+foreach ($nu as $k => $d) {
+    $s = ($k == $cnd['cnd_nuflg']) ? ' selected' : '';
+    echo '<option value="' . $view->str($k) . '"' . $s . '>' . $view->str($d) . '</option>';
+}
+?>
+                        </select>
+	                </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table class="my_table" width="100%">
+                <tr>
+	                <td class="my_border" id="my_create">
+                        <button type="button" class="my_cyan" style="width: 150px;" onclick="return my.create();">新規伝票作成</button>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 2px;">&nbsp;</div>
+
+            <table width="100%">
+                <tr>
+	                <td style="text-align: left; width: 20%;">全件数:<?= $list['cnt'] ?>[件]</td>
+<?php
+if ($list['cnt'] < 1) {
+?>
+	                <td style="visibility: hidden;">
+<?php
+} else {
+?>
+	                <td style="text-align: center;">
+<?php
+}
+?>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(-9);">|&lt;</button>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(-1);">&lt;</button>
+                        <input id="v_page_last" type="hidden" value="<?= $list['last'] ?>">
+                        <input id="v_page_curr" style="text-align: right;" type="text" size="4" value="<?= $list['page'] ?>">/<?= $list['last'] ?>[ページ]
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(1);">&gt;</button>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(9);">&gt;|</button>
+                    </td>
+                    <td style="text-align: right; width: 20%;">
+                        表示数:<?= $list['rpp'] ?>[件/ページ]
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 2px;">&nbsp;</div>
+
+            <table class="my_list">
+                <thead>
+                    <tr>
+                        <th>&nbsp;</th>
+                        <th>連番</th>
+                        <th>伝票番号</th>
+                        <th>日付</th>
+                        <th>決算伝票</th>
+                        <th>不使用伝票</th>
+                        <th>部門</th>
+                    </tr>
+                </thead>
+                <tbody>
+<?php
+if ($list['cnt'] < 1) {
+?>
+                    <tr>
+                        <td colspan="7">データなし</td>
+                    </tr>
+<?php
+} else {
+    $i = ($list['page'] - 1) * $list['rpp'];
+    foreach ($list['rec']['journal'] as $jod) {
+
+        $i++;
+
+        $jid  = $jod['id'];
+        $dno  = $view->str($jid);
+        $ymd  = $view->strDate($jod['ymd']);
+        $week = $view->week($jod['ymd']);
+        $sflg = $view->settledFlag($jod['settled_flg'], $settled);
+        $nflg = $view->checkFlag($jod['not_use_flg']);
+        $scd  = $view->str($section[$jod['scd']]);
+?>
+                    <tr>
+                        <td style="text-align: center;" rowspan="2">
+                            <button type="button" class="my_cyan" onclick="return my.duplicate(<?= $dno ?>);">複製</button>
+                            <br>
+                            <button type="button" class="my_green" onclick="return my.edit(<?= $dno ?>);">編集</button>
+                            <br>
+                            <button type="button" class="my_magenta" onclick="return my.drop(<?= $dno ?>);">削除</button>
+                        </td>
+                        <td style="text-align: right;" rowspan="2"><?= $i ?></td>
+                        <td style="text-align: center;"><?= $dno ?></td>
+                        <td style="text-align: center;"><?= $ymd ?>（<?= $week ?>）</td>
+                        <td style="text-align: center;"><?= $sflg ?></td>
+                        <td style="text-align: center;"><?= $nflg ?></td>
+                        <td style="text-align: center;"><?= $scd ?></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" style="background-color: #77c;">
+                            <table>
+                                <tr>
+                                    <th>借方金額</th>
+                                    <th>借方科目</th>
+                                    <th>摘要</th>
+                                    <th>貸方科目</th>
+                                    <th>貸方金額</th>
+                                </tr>
+<?php
+        $dsum = 0;
+        $csum = 0;
+        foreach ($list['rec']['slip'][$jid] as $jsd) {
+            $damount = ($jsd['debit']  == 0) ? '' : number_format((int)$jsd['amount']);
+            $camount = ($jsd['credit'] == 0) ? '' : number_format((int)$jsd['amount']);
+
+            if (empty($kcd[$jsd['debit']]['name'])) {
+                $dname = $view->str($jsd['debit']);
+            } else {
+                $dname = $view->str($kcd[$jsd['debit']]['name']);
+            }
+
+            if (empty($kcd[$jsd['credit']]['name'])) {
+                $cname = $view->str($jsd['credit']);
+            } else {
+                $cname = $view->str($kcd[$jsd['credit']]['name']);
+            }
+
+            $remark  = $view->str($jsd['remark']);
+
+            $dsum += ($jsd['debit']  == 0) ? 0 : (int)$jsd['amount'];
+            $csum += ($jsd['credit'] == 0) ? 0 : (int)$jsd['amount'];
+?>
+                                <tr>
+                                    <td style="text-align: right;"><?= $damount ?></td>
+                                    <td style="text-align: center;"><?= $dname ?></td>
+                                    <td style="text-align: center;"><?= $remark ?></td>
+                                    <td style="text-align: center;"><?= $cname ?></td>
+                                    <td style="text-align: right;"><?= $camount ?></td>
+                                </tr>
+<?php
+        }
+        $dtotal = number_format($dsum);
+        $ctotal = number_format($csum);
+?>
+                                <tr>
+                                    <th><?= $dtotal ?></th>
+                                    <th colspan="3">合計</th>
+                                    <th><?= $ctotal ?></th>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+<?php
+    }
+}
+?>
+                </tbody>
+            </table>
+
+        </td>
+    </tr>
+</table>

@@ -1,0 +1,156 @@
+/**
+ * @link      <--SourceUrl--> for the canonical source repository
+ * @copyright Copyright (c) <--Year--> <--Name--> (<--CopyrightUrl-->)
+ * @license   <--LicenseUrl-->
+ */
+
+body {
+    font-family: sans-serif;
+    font-weight: normal;
+    font-size: 10pt;
+    color: #123;
+    background-color: #eee;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+hr {
+    height: 1px;
+    border: none;
+    border-top: 1px #77c solid;
+    margin: 0px;
+    padding: 0px;
+}
+
+.my_white {
+    background-color: #fff;
+}
+
+.my_black {
+    background-color: #444;
+}
+
+.my_gray {
+    background-color: #ddd;
+}
+
+.my_red {
+    background-color: #ecc;
+}
+
+.my_green {
+    background-color: #cec;
+}
+
+.my_blue {
+    background-color: #adf;
+}
+
+.my_yellow {
+    background-color: #eec;
+}
+
+.my_magenta {
+    background-color: #ece;
+}
+
+.my_cyan {
+    background-color: #cee;
+}
+
+.my_th {
+    background-color: #bbf;
+}
+
+.my_table {
+    color: #123;
+    background-color: #458;
+}
+
+.my_table th {
+    background-color: #ddf;
+    text-align: center;
+    font-weight: bold;
+    padding: 3px;
+}
+
+.my_table td {
+    background-color: #eee;
+    text-align: left;
+    padding: 2px;
+}
+
+.my_border {
+    border: 1px #77c solid;
+}
+
+.my_list {
+    color: #123;
+    background-color: #458;
+}
+
+.my_list th {
+    background-color: #ddf;
+    text-align: center;
+    font-weight: bold;
+    padding: 3px;
+    border: 1px #77c solid;
+}
+
+.my_list td {
+    text-align: left;
+    padding: 2px;
+    border: 1px #77c solid;
+}
+
+.my_list tbody tr:nth-child(odd) {
+    color: #123;
+    background-color: #eee;
+}
+
+.my_list tbody tr:nth-child(even) {
+    color: #123;
+    background-color: #ddd;
+}
+
+.my_required {
+    color: #000;
+}
+
+.my_not_required {
+    color: #777;
+}
+
+#my_header {
+    height: 22pt;
+    font-weight: normal;
+    font-size: 10pt;
+    color: #321;
+    background-color: #ccf;
+}
+
+#my_footer {
+    height: 11pt;
+    font-weight: normal;
+    font-size: 8pt;
+    color: #531;
+    background-color: #ccf;
+    text-align: center;
+}
+
+#my_main {
+    font-weight: normal;
+    font-size: 9pt;
+    color: #123;
+    background-color: #eef;
+}
+
+#my_separate {
+    height: 12px;
+    background-color: #ddf;
+}
+
+#my_create {
+    border: 1px #77c solid;
+    background-color: #ddf;
+}

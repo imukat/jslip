@@ -1,0 +1,211 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$dat   = $ctrl->dat;
+$bid   = $ctrl->bid;
+$basic = $ctrl->basic;
+
+$id   = $view->str($dat['id']);
+$kana = $view->str($dat['kana']);
+$name = $view->str($dat['name']);
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        errmsg: null,
+        ans:    null,
+        next:   null,
+        func:   null,
+        act:    null,
+        v_kana: null,
+        v_name: null,
+
+        gotoNext: function(func, act) {
+            this.func.val(func);
+            this.act.val(act);
+            this.next.submit();
+            return false;
+        },
+
+        check: function() {
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':   'UserSection',
+                    'act':    'check',
+                    'insert': 0,
+                    'kana':   this.v_kana.val(),
+                    'name':   this.v_name.val(),
+                    'eod':    ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            return this.ans.sts;
+        },
+
+        regist: function() {
+
+            var msg = '';
+
+            if (!confirm("登録しますか？")) {
+                return false;
+            }
+
+            if (this.check() == 'NG') {
+
+                for (var i in this.ans.err) {
+                    msg += this.ans.err[i] + '<br>';
+                }
+
+                this.errmsg.html(msg);
+                return false;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':   'UserSection',
+                    'act':    'regist',
+                    'insert': 0,
+                    'id':     '<?= $id ?>',
+                    'bid':    '<?= $bid ?>',
+                    'kana':   this.v_kana.val(),
+                    'name':   this.v_name.val(),
+                    'eod':    ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                this.errmsg.html(this.ans.err);
+                return false;
+            }
+
+            this.gotoNext('UserSection', 'remember');
+
+            return false;
+        },
+
+        init: function() {
+            this.errmsg = $('#errmsg');
+            this.next   = $('#next');
+            this.func   = $('#func');
+            this.act    = $('#act');
+            this.v_kana = $('#v_kana');
+            this.v_name = $('#v_name');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+    <input type="hidden" name="act"  id="act">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('UserMenu', '');">メニュー</a>
+            &nbsp;&gt;&nbsp;<a onclick="return my.gotoNext('UserSection', 'remember');">部門情報</a>
+            &nbsp;&gt;&nbsp;編集
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login', '');">ログアウト</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: center;">
+            <?= $view->strBasic($basic) ?>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+                    <th class="my_border">部門情報・編集</th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+			                    <td style="padding: 8px;">
+                                    <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.regist();">登録</button>
+                                </td>
+			                    <td style="width: 80px;">&nbsp;</td>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 100px;" onclick="return my.gotoNext('UserSection', 'remember');">戻る</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <div style="height: 8px;">&nbsp;</div>
+
+            <table class="my_table">
+                <tr>
+                    <td colspan="2"><div id="errmsg" class="my_red"></div></td>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="width: 100px; text-align: right;">
+                        部門（かな）
+                    </th>
+                    <td class="my_border">
+                        <input style="width: 400px; text-align: left;" maxlength="80" type="text" id="v_kana" value="<?= $kana ?>">
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="width: 100px; text-align: right;">
+                        部門
+                    </th>
+                    <td class="my_border">
+                        <input style="width: 400px; text-align: left;" maxlength="80" type="text" id="v_name" value="<?= $name ?>">
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

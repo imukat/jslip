@@ -1,0 +1,72 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$ans   = $ctrl->ans;
+$val   = number_format($ans['val']);
+$rname = $view->str($ans['rname']);
+?>
+<table class="my_table">
+    <tr><th>金額</th><td><?= $val ?></td></tr>
+    <tr><th>まるめ方式</th><td><?= $rname ?></td></tr>
+    <tr>
+        <th>外税</th>
+        <td>
+            <table class="my_table">
+                <tr>
+                    <th>方式</th><th>税抜金額</th><th>消費税</th><th>外税金額</th>
+                </tr>
+<?php
+foreach ($ans['otax'] as $k => $d) {
+    $n = $view->str($d['name']);
+    $t = number_format($d['tax']);
+    $v = number_format($ans['val']);
+    $a = number_format($ans['val'] + $d['tax']);
+?>
+                <tr>
+                    <td><?= $n ?></td>
+                    <td style="text-align: right;"><?= $v ?></td>
+                    <td style="text-align: right;"><?= $t ?></td>
+                    <td style="text-align: right;"><?= $a ?></td>
+                </tr>
+<?php
+}
+?>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <th>内税</th>
+        <td>
+            <table class="my_table">
+                <tr>
+                    <th>方式</th><th>税抜金額</th><th>消費税</th><th>内税金額</th>
+                </tr>
+<?php
+foreach ($ans['itax'] as $k => $d) {
+    $n = $view->str($d['name']);
+    $t = number_format($d['tax']);
+    $v = number_format($ans['val'] - $d['tax']);
+    $a = number_format($ans['val']);
+?>
+                <tr>
+                    <td><?= $n ?></td>
+                    <td style="text-align: right;"><?= $v ?></td>
+                    <td style="text-align: right;"><?= $t ?></td>
+                    <td style="text-align: right;"><?= $a ?></td>
+                </tr>
+<?php
+}
+?>
+            </table>
+        </td>
+    </tr>
+</table>
+<br>
+
+</table>
+<br>

@@ -1,0 +1,277 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$dat   = $ctrl->dat;
+$rlist = $ctrl->round;
+$bid   = $ctrl->bid;
+
+$name       = $view->str($dat['name']);
+$disp_name  = $view->str($dat['disp_name']);
+$term_year  = $view->str($dat['term_year']);
+$term_begin = $view->strDate($dat['term_begin']);
+$term_end   = $view->strDate($dat['term_end']);
+$round      = $view->str($dat['round']);
+$calendar   = $view->str($dat['calendar']);
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        errmsg:       null,
+        ans:          null,
+        next:         null,
+        func:         null,
+        act:          null,
+        v_disp_name:  null,
+        v_term_year:  null,
+        v_term_begin: null,
+        v_term_end:   null,
+        v_round:      null,
+        v_calendar:   null,
+        v_valid_flg:  null,
+
+        gotoNext: function(func, act) {
+            this.func.val(func);
+            this.act.val(act);
+            this.next.submit();
+            return false;
+        },
+
+        check: function() {
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':       'UserBasicInfo',
+                    'act':        'check',
+                    'disp_name':  this.v_disp_name.val(),
+                    'term_year':  this.v_term_year.val(),
+                    'term_begin': this.v_term_begin.val(),
+                    'term_end':   this.v_term_end.val(),
+                    'round':      this.v_round.val(),
+                    'calendar':   this.v_calendar.val(),
+                    'eod':   ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            return this.ans.sts;
+        },
+
+        regist: function() {
+
+            var msg = '';
+
+            if (!confirm("登録しますか？")) {
+                return false;
+            }
+
+            if (this.check() == 'NG') {
+
+                for (var i in this.ans.err) {
+                    msg += this.ans.err[i] + '<br>';
+                }
+
+                this.errmsg.html(msg);
+                return false;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':       'UserBasicInfo',
+                    'act':        'regist',
+                    'bid':        '<?= $bid ?>',
+                    'disp_name':  this.v_disp_name.val(),
+                    'term_year':  this.v_term_year.val(),
+                    'term_begin': this.v_term_begin.val(),
+                    'term_end':   this.v_term_end.val(),
+                    'round':      this.v_round.val(),
+                    'calendar':   this.v_calendar.val(),
+                    'eod':   ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                this.errmsg.html(this.ans.err);
+                return false;
+            }
+
+            this.gotoNext('UserMenu', '');
+
+            return false;
+        },
+
+        init: function() {
+            this.errmsg       = $('#errmsg');
+            this.next         = $('#next');
+            this.func         = $('#func');
+            this.act          = $('#act');
+            this.v_disp_name  = $('#v_disp_name');
+            this.v_term_year  = $('#v_term_year');
+            this.v_term_begin = $('#v_term_begin');
+            this.v_term_end   = $('#v_term_end');
+            this.v_round      = $('#v_round');
+            this.v_calendar   = $('#v_calendar');
+
+            this.v_term_begin.datepicker();
+            this.v_term_end.datepicker();
+            this.v_term_begin.val('<?= $term_begin ?>');
+            this.v_term_end.val('<?= $term_end ?>');
+            this.v_round.val('<?= $round ?>');
+            this.v_calendar.val('<?= $calendar ?>');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+    <input type="hidden" name="act"  id="act">
+    <input type="hidden" name="bid"  id="bid" value="<?= $bid ?>">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('UserMenu', '');">メニュー</a>
+            &nbsp;&gt;&nbsp;基本情報
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login', '');">ログアウト</button>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+	                <th class="my_border">基本情報</th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+			                    <td style="padding: 8px;">
+                                    <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.regist();">登録</button>
+                                </td>
+			                    <td style="width: 80px;">&nbsp;</td>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 100px;" onclick="return my.gotoNext('UserMenu', '');">戻る</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <div style="height: 8px;">&nbsp;</div>
+
+            <table class="my_table">
+                <tr>
+                    <td colspan="2"><div id="errmsg" class="my_red"></div></td>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="width: 100px; text-align: right;">
+                        <div class="my_required">名称</div>
+                    </th>
+                    <td class="my_border">
+                        <?= $name ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="width: 100px; text-align: right;">
+                        <div class="my_required">表示名称</div>
+                    </th>
+                    <td class="my_border">
+                        <input style="width: 400px; text-align: left;" maxlength="80" type="text" id="v_disp_name" value="<?= $disp_name ?>">
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="text-align: right;">
+                        <div class="my_required">年度</div>
+                    </th>
+                    <td class="my_border">
+                        <input style="width: 50px; text-align: right;" maxlength="4" type="text" id="v_term_year" value="<?= $term_year ?>">
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="text-align: right;">
+                        <div class="my_required">期首</div>
+                    </th>
+                    <td class="my_border">
+                        <input type="text" id="v_term_begin">
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="text-align: right;">
+                        <div class="my_required">期末</div>
+                    </th>
+                    <td class="my_border">
+                        <input type="text" id="v_term_end">
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="text-align: right;">
+                        <div class="my_required">まるめ</div>
+                    </th>
+                    <td class="my_border">
+                        <select id="v_round">
+<?php
+foreach ($rlist as $d) {
+    echo '<option value="' . $view->str($d['c0']) . '">' . $view->str($d['name']) . '</option>';
+}
+?>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="my_border" style="text-align: right;">
+                        <div class="my_required">歴</div>
+                    </th>
+                    <td class="my_border">
+                        <select id="v_calendar"><?php echo $view->calendarOption(); ?></select>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

@@ -1,0 +1,239 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$bid   = $ctrl->bid;
+$basic = $ctrl->basic;
+$lcdt  = $ctrl->lcdt;
+$ldmsg = (empty($lcdt)) ? '計算処理が未処理です。' : $lcdt;
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next: null,
+        func: null,
+        act:  null,
+        last: null,
+        lcdt: null,
+
+        gotoNext: function(func, act) {
+
+            if (act == 'calculate') {
+                if (confirm('帳票作成のための計算を実行しますか？')) {
+                    this.last.text('計算中');
+                } else {
+                    return false;
+                }
+            }
+
+            this.func.val(func);
+            this.act.val(act);
+            this.next.attr('target' , '_self');
+            this.next.submit();
+            return false;
+        },
+
+        popup: function(func, act) {
+            if (this.lcdt == '') {
+                alert('計算処理が未処理です。 ');
+                return false;
+            }
+            this.func.val(func);
+            this.act.val(act);
+            this.next.attr('target', '_blank');
+            this.next.submit();
+            return false;
+        },
+
+        init: function() {
+            this.next = $('#next');
+            this.func = $('#func');
+            this.act  = $('#act');
+            this.last = $('#last');
+            this.lcdt = '<?= $lcdt ?>';
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+    <input type="hidden" name="act"  id="act">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('UserMenu', '');">メニュー</a>
+            &nbsp;&gt;&nbsp;計算処理／帳票処理
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login', '');">ログアウト</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: center;">
+            <?= $view->strBasic($basic) ?>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+	                <th class="my_border">計算処理／帳票処理</th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+			                    <td style="padding: 8px;">
+                                    <button type="button" class="my_green" style="width: 200px; height: 30px;" onclick="return my.gotoNext('UserCalc', 'calculate');">帳簿整理（計算）</button>
+                                </td>
+			                    <td style="width: 80px;">&nbsp;</td>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 200px; height: 30px;" onclick="return my.gotoNext('UserMenu', '');">戻る</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <div style="height: 8px;">&nbsp;</div>
+
+            <table class="my_table">
+                <tr>
+                    <th class="my_border" width="140px">
+                        最終計算日時
+                    </th>
+                    <td class="my_border" width="210px" style="text-align: center;">
+                        <div id="last"><?= $ldmsg ?></div>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 8px;">&nbsp;</div>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <div style="height: 8px;">&nbsp;</div>
+
+<?php
+$btn_atr = 'class="my_cyan" style="width: 300px; height: 30px;"';
+?>
+            <table width="100%">
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?>></button>
+                                </td>
+                                <td style="width: 50px;"></td>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?>></button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'slip');">仕訳帳</button>
+                                </td>
+                                <td style="width: 50px;"></td>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'pl');">損益計算書</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'ledger');">総勘定元帳</button>
+                                </td>
+                                <td style="width: 50px;"></td>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'bs');">貸借対照表</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'tb_detail');">試算表（詳細）</button>
+                                </td>
+                                <td style="width: 50px;"></td>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'pls');">損益計算書（決算）</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'tb');">試算表</button>
+                                </td>
+                                <td style="width: 50px;"></td>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?> onclick="return my.popup('UserCalc', 'bss');">貸借対照表（決算）</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?>></button>
+                                </td>
+                                <td style="width: 50px;"></td>
+                                <td style="padding: 3px;">
+                                    <button type="button" <?= $btn_atr ?>></button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

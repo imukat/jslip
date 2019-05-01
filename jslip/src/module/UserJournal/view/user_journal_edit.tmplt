@@ -1,0 +1,675 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$dat   = $ctrl->dat;
+$bid   = $ctrl->bid;
+$mode  = $ctrl->mode;
+$basic = $ctrl->basic;
+$item  = $ctrl->item;
+$sect  = $ctrl->sect;
+$stld  = $ctrl->stld;
+
+$jid         = $view->str($dat['journal']['id']);
+$scd         = $view->str($dat['journal']['scd']);
+$ymd         = $view->str(str_replace('-', '/', $dat['journal']['ymd']));
+$settled_flg = $view->str($dat['journal']['settled_flg']);
+$not_use_flg = $view->str($dat['journal']['not_use_flg']);
+$slip        = $dat['slip'];
+
+$max    = 30;
+$lines  = count($slip);
+$sundry = '0';
+
+$insert =  ($mode == 'edit') ? 0 : 1;
+$title  =  ($mode == 'edit') ? '編集' : '複製';
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        errmsg:      null,
+        ans:         null,
+        next:        null,
+        func:        null,
+        act:         null,
+        jid:         null,
+        scd:         null,
+        ymd:         null,
+        settled_flg: null,
+        not_use_flg: null,
+
+        val:         null,
+
+        sort1:       null,
+        sort2:       null,
+        sid:         0,
+        sname:       ['50音順', '使用順'],
+        sundry:      '<?= $sundry ?>',
+
+        max:         <?= $max ?>,
+        lines:       <?= $lines ?>,
+        last:        <?= $lines ?>,
+
+        gotoNext: function(func, act) {
+            this.func.val(func);
+            this.act.val(act);
+            this.next.submit();
+            return false;
+        },
+
+        getVal: function() {
+            var s, a, v;
+            var val = {};
+
+            val['jid'] = $('#jid').val();
+            val['ymd'] = $('#ymd').val();
+
+            $('select').each(function(){
+                s = $(this).attr('id');
+                if (s) {
+                    val[s] = $('#' + s).val();
+                }
+            });
+
+            $('input[type="hidden"]').each(function(){
+                s = $(this).attr('id');
+                a = s.split('_');
+                if (a[0] == 'v') {
+                    v = '#v_' + a[1] + '_valid';
+                    if ($(v).val() == 1) {
+                        val[s] = $('#' + s).val();
+                    }
+                }
+            });
+
+            $('input[type="text"]').each(function(){
+                s = $(this).attr('id');
+                a = s.split('_');
+                if (a[0] == 'v') {
+                    v = '#v_' + a[1] + '_valid';
+                    if ($(v).val() == 1) {
+                        val[s] = $('#' + s).val();
+                    }
+                }
+            });
+
+            this.val = val;
+        },
+
+        debug: function() {
+            this.getVal();
+            for (var i in this.val) {
+                alert(i + ' = ' + this.val[i]);
+            }
+        },
+
+        slct: function(id) {
+
+            var itm = (this.sid == 0) ? '#item_name' : '#item_time';
+
+            var debs = 's_' + id + '_deb_name';
+            var debo = 'o_' + id + '_deb_name';
+            var debv = 'v_' + id + '_deb_name';
+            $('#' + debs).html($(itm).html());
+            $('#' + debs + ' select').attr('id', debo);
+            $('#' + debo).attr('onchange', "return my.selChg(" + id + ", 'deb');");
+            $('#' + debo).val($('#' + debv).val());
+
+            var cres = 's_' + id + '_cre_name';
+            var creo = 'o_' + id + '_cre_name';
+            var crev = 'v_' + id + '_cre_name';
+            $('#' + cres).html($(itm).html());
+            $('#' + cres + ' select').attr('id', creo);
+            $('#' + creo).attr('onchange', "return my.selChg(" + id + ", 'cre');");
+            $('#' + creo).val($('#' + crev).val());
+        },
+
+        selChg: function(id, w) {
+            var o = '#o_' + id + '_' + w + '_name';
+            var v = '#v_' + id + '_' + w + '_name';
+            var k = $(o).val();
+
+            $(v).val(k);
+
+            if (k == this.sundry) {
+                $('#v_' + id + '_' + w + '_amount').val(0);
+                this.getSum();
+            }
+        },
+
+        getSum: function() {
+
+            var d, c;
+            var deb = 0;
+            var cre = 0;
+
+            for (var i = 1; i <= this.max; i++) {
+                if ($('#v_' + i + '_valid').val() > 0) {
+                    d = $('#v_' + i + '_deb_amount').val();
+                    c = $('#v_' + i + '_cre_amount').val();
+                    deb += d.replace(/,/g, '') * 1;
+                    cre += c.replace(/,/g, '') * 1;
+                }
+            }
+
+            $('#v_deb_sum').val(deb);
+            $('#v_cre_sum').val(cre);
+        },
+
+        chgAmount: function(id, w) {
+
+            var v;
+            var debv = '#v_' + id + '_deb_amount';
+            var crev = '#v_' + id + '_cre_amount';
+
+            if (w == 'deb') {
+                v = $(debv).val();
+                $(crev).val(v);
+            } else {
+                v = $(crev).val();
+                $(debv).val(v);
+            }
+
+            for (var i = 1; i <= this.max; i++) {
+
+                if ($('#v_' + i + '_valid').val() > 0) {
+                    if ($('#v_' + i + '_deb_name').val() == this.sundry) {
+                        $('#v_' + i + '_deb_amount').val(0);
+                    }
+                    if ($('#v_' + i + '_cre_name').val() == this.sundry) {
+                        $('#v_' + i + '_cre_amount').val(0);
+                    }
+                }
+            }
+
+            this.getSum();
+        },
+
+        chkTax: function(id) {
+
+            var v = $('#' + id).val();
+
+            if (v < 1) {
+                return;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':      'UserJournal',
+                    'act':       'tax',
+                    'bid':       '<?= $bid ?>',
+                    'val':       v,
+                    'eod':       ''
+                }
+            })
+            .done((data) => {
+                $('#modalTaxBody').html(data);
+            })
+            .fail((data) => {
+                $('#modalTaxBody').html('error');
+            });
+
+            $('#modalTax').modal();
+        },
+
+        using: function(i) {
+            this.slct(i);
+            $('#v_' + i + '_valid').val(1);
+            $('#r_' + i).css('visibility', 'visible');
+        },
+
+        plus: function() {
+
+            if (this.last >= this.max) {
+                alert('これ以上追加できません。');
+                return;
+            }
+
+            ++this.lines;
+            ++this.last;
+            this.using(this.last);
+        },
+
+        drop: function(seq) {
+
+            if (this.lines < 2) {
+                alert('これ以上削除できません。');
+                return;
+            }
+
+            if (!confirm('行番号' + seq + 'を削除しますか？')) {
+                return;
+            }
+
+            --this.lines;
+
+            $('#v_' + seq + '_valid').val(0);
+            $('#r_' + seq).css('visibility', 'collapse');
+        },
+
+        sort: function() {
+
+            this.sid = ++this.sid % 2;
+            this.sort1.html(this.sname[this.sid]);
+            this.sort2.html(this.sname[this.sid]);
+
+            for (var i = 1; i <= this.max; i++) {
+                if ($('#v_' + i + '_valid').val() > 0) {
+                    this.slct(i);
+                }
+            }
+        },
+
+        check: function(arg) {
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':      'UserJournal',
+                    'act':       'check',
+                    'insert':    <?= $insert ?>,
+                    'bid':       '<?= $bid ?>',
+                    'arg':       arg,
+                    'eod':       ''
+                }
+            })
+            .done((data) => {
+                this.ans = {"sts": "OK", "err": ""};
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            return this.ans.sts;
+        },
+
+        regist: function() {
+
+            var n;
+            var msg = '';
+            var v   = {};
+            var arg = 0;
+
+            this.getVal();
+
+            for (var i = 1; i <= this.max; i++) {
+                if ($('#v_' + i + '_valid').val() > 0) {
+                    n = 'v_' + i + '_';
+                    v[i] = {};
+                    v[i]['deb_amount'] = this.val[n + 'deb_amount'];
+                    v[i]['deb_name']   = this.val[n + 'deb_name'];
+                    v[i]['remark']     = this.val[n + 'remark'];
+                    v[i]['cre_name']   = this.val[n + 'cre_name'];
+                    v[i]['cre_amount'] = this.val[n + 'cre_amount'];
+                }
+            }
+
+            arg = {
+                'jid':         this.val['jid'],
+                'scd':         this.val['scd'],
+                'ymd':         this.val['ymd'],
+                'settled_flg': this.val['settled_flg'],
+                'not_use_flg': this.val['not_use_flg'],
+                'dat':         v,
+            };
+
+            if (!confirm("登録しますか？")) {
+                return false;
+            }
+
+            if (this.check(arg) == 'NG') {
+
+                for (var i in this.ans.err) {
+                    msg += this.ans.err[i] + '<br>';
+                }
+
+                this.errmsg.html(msg);
+                return false;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':      'UserJournal',
+                    'act':       'regist',
+                    'insert':    <?= $insert ?>,
+                    'bid':       '<?= $bid ?>',
+                    'arg':       arg,
+                    'eod':       ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                this.errmsg.html(this.ans.err);
+                return false;
+            }
+
+            this.gotoNext('UserJournal', 'remember');
+
+            return false;
+        },
+
+        init: function() {
+            this.errmsg      = $('#errmsg');
+            this.next        = $('#next');
+            this.func        = $('#func');
+            this.act         = $('#act');
+            this.jid         = $('#jid');
+            this.scd         = $('#scd');
+            this.ymd         = $('#ymd');
+            this.settled_flg = $('#settled_flg');
+            this.not_use_flg = $('#not_use_flg');
+            this.sort1       = $('#sort1');
+            this.sort2       = $('#sort2');
+
+            this.ymd.datepicker();
+
+            this.sort1.html(this.sname[this.sid]);
+            this.sort2.html(this.sname[this.sid]);
+
+            for (var i = 1; i <= this.lines; i++) {
+                this.using(i);
+            }
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+    <input type="hidden" name="act"  id="act">
+</form>
+
+<div id="item_name" style="visibility: hidden;">
+    <select>
+        <option value="-1">&nbsp;</option>
+<?php
+$c = '';
+foreach ($item['name'] as $k => $d) {
+    $p = mb_substr($d['kana'], 0, 1);
+    if ($c != $p) {
+        if ($c != '') {
+            echo '</optgroup>';
+        }
+        echo '<optgroup label="' . $p . '">';
+        $c = $p;
+    }
+    echo '<option value="' . $view->str($k) . '">' . $view->str($d['name']) , '</option>';
+}
+if ($c != '') {
+    echo '</optgroup>';
+}
+?>
+    </select>
+</div>
+
+<div id="item_time" style="visibility: hidden;">
+     <select>
+        <option value="-1">&nbsp;</option>
+<?php
+foreach ($item['time'] as $k => $d) {
+    echo '<option value="' . $view->str($k) . '">' . $view->str($d) . '</option>';
+}
+?>
+    </select>
+</div>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('UserMenu', '');">メニュー</a>
+            &nbsp;&gt;&nbsp;<a onclick="return my.gotoNext('UserJournal', 'remember');">仕訳帳</a>
+            &nbsp;&gt;&nbsp;<?= $title ?>
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login', '');">ログアウト</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: center;">
+            <?= $view->strBasic($basic) ?>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+                    <th class="my_border">仕訳帳・<?= $title ?></th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table>
+                <tr>
+                    <td align="center">
+                        <table>
+                            <tr>
+			                    <td style="padding: 8px;">
+                                    <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.regist();">登録</button>
+                                </td>
+			                    <td style="width: 80px;">&nbsp;</td>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 100px;" onclick="return my.gotoNext('UserJournal', 'remember');">戻る</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table width="100%">
+                <tr>
+                    <td><div id="errmsg" class="my_red"></div></td>
+                </tr>
+            </table>
+
+            <table class="my_list" width="100%">
+                <thead>
+                    <tr>
+                        <th>伝票番号</th>
+                        <th>部門</th>
+                        <th>伝票日付</th>
+                        <th>決算伝票</th>
+                        <th>不使用伝票</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: center;">
+<?php
+$mnam = ($mode == 'edit') ? $jid : '新番号';
+$mjid = ($mode == 'edit') ? $jid : '-1';
+?>
+                            <?= $mnam ?><input id="jid" type="hidden" value="<?= $mjid ?>">
+                        </td>
+                        <td style="text-align: center;">
+                            <select id="scd">
+<?php
+foreach ($sect as $k => $d) {
+    $slct = ($k == $scd) ? ' selected' : '';
+    echo '<option value="' . $view->str($k) . '"' . $slct . '>' . $view->str($d) . '</option>';
+}
+?>
+                            </select>
+                        </td>
+                        <td style="text-align: center;">
+                            <input id="ymd" size="10" style="text-align: center;" type="text" value="<?= $ymd ?>">
+                        </td>
+                        <td style="text-align: center;">
+                            <select id="settled_flg">
+<?php
+foreach ($stld as $k => $d) {
+    $slct = ($k == $settled_flg) ? ' selected' : '';
+    echo '<option value="' . $view->str($k) . '"' . $slct . '>' . $view->str($d) . '</option>';
+}
+?>
+                            </select>
+                        </td>
+                        <td style="text-align: center;">
+                            <select id="not_use_flg">
+<?php
+$nuflg = (empty($not_use_flg)) ? ['', ' selected'] : [' selected', ''];
+?>
+                                <option value="1"<?= $nuflg[0] ?>>不使用伝票</option>
+                                <option value="0"<?= $nuflg[1] ?>>使用伝票</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="height: 4px;">&nbsp;</div>
+            <!-- <button type="button" class="my_magenta" onclick="return my.debug();">debug</button> -->
+
+            <table>
+                <tr>
+                    <td align="center">
+                        <table class="my_list">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>借方金額</th>
+                                    <th>
+                                        借方科目
+                                        <button type="button" class="my_th" onclick="return my.sort();">
+                                            <div id="sort1"></div>
+                                        </button>
+                                    </th>
+                                    <th>摘要</th>
+                                    <th>
+                                        貸方科目
+                                        <button type="button" class="my_th" onclick="return my.sort();">
+                                            <div id="sort2"></div>
+                                        </button>
+                                    </th>
+                                    <th>貸方金額</th>
+                                    <th>削除</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+<?php
+$sdamnt = 0;
+$scamnt = 0;
+for ($i = 0; $i < $max; $i++) {
+
+    $seq = $i + 1;
+
+    if (empty($slip[$i])) {
+        $debit  = -1;
+        $credit = -1;
+        $remark = '';
+        $damnt  = 0;
+        $camnt  = 0;
+    } else {
+        $amount = (int)$slip[$i]['amount'];
+        $debit  = $view->str($slip[$i]['debit']);
+        $credit = $view->str($slip[$i]['credit']);
+        $remark = $view->str($slip[$i]['remark']);
+        $damnt  = ($debit  == $sundry) ? 0 : $amount;
+        $camnt  = ($credit == $sundry) ? 0 : $amount;
+
+        $sdamnt += $damnt;
+        $scamnt += $camnt;
+    }
+?>
+                                <tr id="r_<?= $seq ?>" style="visibility: collapse;">
+                                    <td style="text-align: right;">
+                                        <?= $seq ?>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input id="v_<?= $seq ?>_deb_amount" size="10" style="text-align: right;" type="text" value="<?= $damnt ?>" onchange="return my.chgAmount('<?= $seq ?>', 'deb')" ondblclick="my.chkTax('v_<?= $seq ?>_deb_amount')">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input id="v_<?= $seq ?>_deb_name" type="hidden" value="<?= $debit ?>">
+                                        <div id="s_<?= $seq ?>_deb_name">&nbsp;</div>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input id="v_<?= $seq ?>_remark" size="40" type="text" value="<?= $remark ?>">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input id="v_<?= $seq ?>_cre_name" type="hidden" value="<?= $credit ?>">
+                                        <div id="s_<?= $seq ?>_cre_name">&nbsp;</div>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input id="v_<?= $seq ?>_cre_amount" size="10" style="text-align: right;" type="text" value="<?= $camnt ?>" onchange="return my.chgAmount('<?= $seq ?>', 'cre')" ondblclick="my.chkTax('v_<?= $seq ?>_cre_amount')">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input id="v_<?= $seq ?>_valid" type="hidden" value="0">
+                                        <button type="button" class="my_magenta" onclick="return my.drop(<?= $seq ?>);">削除</button>
+                                    </td>
+                                </tr>
+<?php
+}
+?>
+                                <tr>
+                                    <th>
+                                        <button type="button" class="my_th" onclick="return my.plus();">＋</button>
+                                    </th>
+                                    <td style="text-align: center;">
+                                        <input id="v_deb_sum" size="10" style="text-align: right;" type="text" value="<?= $sdamnt ?>">
+                                    </td>
+                                    <th colspan="3" style="text-align: center;">合計</th>
+                                    <td style="text-align: center;">
+                                        <input id="v_cre_sum" size="10" style="text-align: right;" type="text" value="<?= $scamnt ?>">
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                            </tbody>
+                         </table>
+                    </td>
+                <tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+<!-- モーダルダイアログ Tax -->
+<div class="modal" id="modalTax" tabindex="-1" role="dialog" aria-labelledby="staticModalLabel" aria-hidden="true" data-show="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&#215;</span>
+                </button>
+                <h4 class="modal-tax-title">消費税</h4>
+            </div>
+            <div class="modal-body">
+                <div id="modalTaxBody"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="my_magenta" data-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>

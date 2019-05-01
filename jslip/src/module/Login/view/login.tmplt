@@ -1,0 +1,124 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$token  = $ctrl->token;
+$expire = str_replace('-', '/', EXPIRE);
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        ans:     null,
+        errmsg:  null,
+        account: null,
+        passwd:  null,
+        nextUrl: null,
+        func:    null,
+
+        chk_ans: function() {
+
+            if (this.ans.sts == 'NG') {
+                this.errmsg.html(this.ans.err);
+                return;
+            }
+
+            this.func.val(this.ans.func);
+            this.nextUrl.attr('action', this.ans.url).submit();
+        },
+
+        btn_login: function() {
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':    'Login',
+                    'act':     'check',
+                    'account': this.account.val(),
+                    'passwd':  this.passwd.val(),
+                    'token':   '<?= $token ?>'
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            })
+            .always((data) => {
+                this.chk_ans();
+            });
+
+            return false;
+        },
+
+        init: function() {
+
+            this.errmsg  = $('#errmsg');
+            this.account = $('#account');
+            this.passwd  = $('#passwd');
+            this.nextUrl = $('#nextUrl');
+            this.func    = $('#func');
+
+            this.passwd.val('');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="nextUrl" id="nextUrl">
+    <input type="hidden" name="func" id="func">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td align="left">&nbsp;ログイン （有効期限：<?= $expire ?>）</td>
+        <td align="right">
+            <!-- <button type="button" class="my_red">閉じる</button> -->
+        </td>
+    </tr>
+</table>
+
+<div style="height: 25px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table>
+                <tr>
+	                <td colspan="3"><div id="errmsg" class="my_red"></div></td>
+                </tr>
+                <tr>
+	                <td colspan="3">&nbsp;</td>
+                </tr>
+                <tr>
+	                <td>アカウント名</td>
+	                <td>：</td>
+                    <td><input type="text" id="account" size="32" value="" style="width: 160pt; height: 18pt;"></td>
+                </tr>
+                <tr>
+	                <td>パスワード</td>
+	                <td>：</td>
+	                <td><input type="password" id="passwd" size="32" value="" style="width: 160pt; height: 18pt;"></td>
+                </tr>
+                <tr>
+	                <td colspan="3"><br></td>
+                </tr>
+                <tr>
+	                <td colspan="3" align="center">
+                        <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.btn_login();">ログイン</button>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

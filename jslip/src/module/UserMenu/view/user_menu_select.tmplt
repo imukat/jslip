@@ -1,0 +1,109 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$basic = $ctrl->dat['basic'];
+$err   = (empty($ctrl->dat['err'])) ? [] : $ctrl->dat['err'];
+$bid   = $_SESSION['minfo']['bid'];
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next:  null,
+        func:  null,
+        act:   null,
+        bid:   null,
+        v_bid: null,
+        err:   <?php echo json_encode($err) ?>,
+
+        gotoNext: function(func) {
+            this.func.val(func);
+            this.bid.val(<?= $bid ?>);
+            this.act.val('');
+            this.next.attr('target', '_self');
+            this.next.submit();
+            return false;
+        },
+
+        setBid: function() {
+            this.func.val('UserMenu');
+            this.bid.val(this.v_bid.val());
+            this.act.val('setBid');
+            this.next.attr('target', '_self');
+            this.next.submit();
+            return false;
+        },
+
+        chkErr: function() {
+            for (var i in this.err) {
+                alert("Error : " + i + " : " + this.err[i]);
+            }
+        },
+
+        init: function() {
+            this.next  = $('#next');
+            this.func  = $('#func');
+            this.act   = $('#act');
+            this.bid   = $('#bid');
+            this.v_bid = $('#v_bid');
+            this.chkErr();
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func" id="func">
+    <input type="hidden" name="bid"  id="bid">
+    <input type="hidden" name="act"  id="act">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td align="left">&nbsp;メニュー</td>
+        <td align="right">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login'); ">ログアウト</button>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <select id="v_bid">
+<?php
+foreach ($basic as $b) {
+    $slct    = ($bid == $d['id']) ? ' selected' : '';
+    $opt     = $view->str($b['disp_name'])
+             . ' ' . $view->str($b['term_year']) . '年度'
+             . '（' . $view->strDate($b['term_begin'])
+             . '～' . $view->strDate($b['term_end']) . '）'
+             ;
+    echo '<option value="' . $b['id'] . '"' . $slct . '>' . $opt . '</option>' . "\n";
+}
+?>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td align="center">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td align="center">
+            <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.setBid();">決定</button>
+        </td>
+    </tr>
+</table>

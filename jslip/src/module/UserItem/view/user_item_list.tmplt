@@ -1,0 +1,435 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+
+$view  = $ctrl->view;
+$bid   = $ctrl->bid;
+$basic = $ctrl->basic;
+$acitm = $ctrl->acitm;
+$cnd   = $ctrl->dat['cnd'];
+$list  = $ctrl->dat['list'];
+
+$c_c1  = $ctrl->const['c_c1'];
+$c_c2  = $ctrl->const['c_c2'];
+$c_c3  = $ctrl->const['c_c3'];
+$c_c4  = $ctrl->const['c_c4'];
+?>
+<script type="text/javascript">
+
+    var my = {
+
+        next:        null,
+        func:        null,
+        act:         null,
+        id:          null,
+        cnd_kana:    null,
+        cnd_name:    null,
+        page_curr:   null,
+        v_cnd_kana:  null,
+        v_cnd_name:  null,
+        v_page_curr: null,
+        v_page_last: null,
+
+        gotoNext: function(func) {
+            this.func.val(func);
+            this.act.val('');
+            this.next.submit();
+            return false;
+        },
+
+        create: function() {
+            this.func.val('UserItem');
+            this.act.val('create');
+            this.next.submit();
+            return false;
+        },
+
+        drop: function(id, name) {
+
+            var msg = '';
+
+            if (!confirm("科目名 " + name + " を削除しますか？")) {
+                return false;
+            }
+
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func': 'UserItem',
+                    'act':  'drop',
+                    'id':   id,
+                    'eod':  ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                alert(this.ans.err);
+                return false;
+            }
+
+            this.gotoNext('UserItem', 'remember');
+
+            return false;
+        },
+
+        use: function(id) {
+            var vflg = $('#v_valid_flg_' + id).val();
+            $.ajax({
+                url:   '<?= $base ?>',
+                type:  'post',
+                async: false,
+                data:  {
+                    'func':      'UserItem',
+                    'act':       'use',
+                    'bid':       '<?= $bid ?>',
+                    'id':        id,
+                    'valid_flg': vflg,
+                    'eod':       ''
+                }
+            })
+            .done((data) => {
+                eval("this.ans = " + data);
+            })
+            .fail((data) => {
+                this.ans = {"sts": "NG", "err": "ajax error"};
+            });
+
+            if (this.ans.sts == 'NG') {
+                alert(this.ans.err);
+            }
+
+            return false;
+        },
+
+        edit: function(id) {
+            this.func.val('UserItem');
+            this.act.val('edit');
+            this.id.val(id);
+            this.next.submit();
+            return false;
+        },
+
+        move: function(dlt) {
+
+            var curr = this.v_page_curr.val() * 1;
+            var last = this.v_page_last.val() * 1;
+            var next;
+
+            switch (dlt) {
+                case -9: next = 1;          break;
+                case  9: next = last;       break;
+                default: next = curr + dlt; break;
+            }
+
+            if (next > last) {
+                next = last;
+            }
+
+            if (next < 1) {
+                next = 1;
+            }
+
+            this.v_page_curr.val(next);
+            this.search();
+
+            return false;
+        },
+
+        search: function() {
+
+            if (this.v_page_curr.val() < 1) {
+                this.v_page_curr.val(1);
+            }
+
+            this.func.val('UserItem');
+            this.act.val('search');
+            this.cnd_kana.val(this.v_cnd_kana.val());
+            this.cnd_name.val(this.v_cnd_name.val());
+            this.page_curr.val(this.v_page_curr.val());
+            this.next.submit();
+            return false;
+        },
+
+        reset: function() {
+            this.v_cnd_name.val('');
+            this.v_cnd_kana.val('');
+            this.v_page_curr.val(1);
+            return false;
+        },
+
+        init: function() {
+            this.next        = $('#next');
+            this.func        = $('#func');
+            this.act         = $('#act');
+            this.id          = $('#id');
+            this.cnd_kana    = $('#cnd_kana');
+            this.cnd_name    = $('#cnd_name');
+            this.page_curr   = $('#page_curr');
+            this.v_cnd_kana  = $('#v_cnd_kana');
+            this.v_cnd_name  = $('#v_cnd_name');
+            this.v_page_curr = $('#v_page_curr');
+            this.v_page_last = $('#v_page_last');
+        }
+    }
+
+    $(function(){
+        my.init();
+    });
+
+</script>
+
+<form method="post" name="next" id="next" action="<?= $base ?>">
+    <input type="hidden" name="func"      id="func">
+    <input type="hidden" name="act"       id="act">
+    <input type="hidden" name="cnd_kana"  id="cnd_kana">
+    <input type="hidden" name="cnd_name"  id="cnd_name">
+    <input type="hidden" name="page_curr" id="page_curr">
+    <input type="hidden" name="id"        id="id">
+    <input type="hidden" name="bid"       id="bid" value="<?= $bid ?>">
+</form>
+
+<table id="my_header" width="100%">
+    <tr>
+        <td>
+            &nbsp;<a onclick="return my.gotoNext('UserMenu');">メニュー</a>
+            &nbsp;&gt;&nbsp;科目コード
+        </td>
+        <td style="text-align: right;">
+            <button type="button" class="my_magenta" style="width: 120px;" onclick="return my.gotoNext('Login');">ログアウト</button>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: center;">
+            <?= $view->strBasic($basic) ?>
+        </td>
+    </tr>
+</table>
+
+<div style="height: 5px;">&nbsp;</div>
+
+<table width="100%">
+    <tr>
+        <td align="center">
+            <table class="my_table" width="100%">
+                <tr>
+	                <th class="my_border">科目コード</th>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table class="my_table" width="100%">
+                <tr>
+	                <th colspan="3" class="my_border">絞込み検索</th>
+                </tr>
+                <tr>
+	                <td class="my_border" style="text-align: center; width: 110px;" rowspan="2">
+                        <table class="my_table" cellpadding="0" cellspacing="2">
+		                    <tr>
+			                    <td>
+                                    <button type="button" class="my_cyan" style="width: 100px;" onclick="return my.search();">検索</button>
+                                </td>
+                            </tr>
+		                    <tr>
+			                    <td>
+                                    <button type="button" class="my_magenta" style="width: 100px;" onclick="return my.reset();">検索リセット</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+	                <th class="my_border">科目名</th>
+	                <td class="my_border">
+                        <input id="v_cnd_name" type="text" value="<?= $view->str($cnd['cnd_name']) ?>" size="20" style="text-align: left;">
+	                </td>
+                </tr>
+                <tr>
+	                <th class="my_border" style="width: 100px;">科目名（かな）</th>
+	                <td class="my_border">
+                        <input id="v_cnd_kana" type="text" value="<?= $view->str($cnd['cnd_kana']) ?>" size="20" style="text-align: left;">
+	                </td>
+                </tr>
+            </table>
+
+            <div style="height: 1px;">&nbsp;</div><hr>
+
+            <table class="my_table" width="100%">
+                <tr>
+	                <td class="my_border" id="my_create">
+                        <button type="button" class="my_cyan" style="width: 150px;" onclick="return my.create();">新規科目コード作成</button>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 2px;">&nbsp;</div>
+
+            <table width="100%">
+                <tr>
+	                <td style="text-align: left; width: 20%;">全件数:<?= $list['cnt'] ?>[件]</td>
+<?php
+if ($list['cnt'] < 1) {
+?>
+	                <td style="visibility: hidden;">
+<?php
+} else {
+?>
+	                <td style="text-align: center;">
+<?php
+}
+?>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(-9);">|&lt;</button>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(-1);">&lt;</button>
+                        <input id="v_page_last" type="hidden" value="<?= $list['last'] ?>">
+                        <input id="v_page_curr" style="text-align: right;" type="text" size="4" value="<?= $list['page'] ?>">/<?= $list['last'] ?>[ページ]
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(1);">&gt;</button>
+                        <button type="button" class="my_blue" style="width: 40px;" onclick="return my.move(9);">&gt;|</button>
+                    </td>
+                    <td style="text-align: right; left; width: 20%;">
+                        表示数:<?= $list['rpp'] ?>[件/ページ]
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 2px;">&nbsp;</div>
+
+            <table class="my_list">
+                <thead>
+                    <tr>
+                        <th>編集</th>
+                        <th>連番</th>
+                        <th>有効</th>
+                        <th>科目コード</th>
+                        <th>科目名</th>
+                        <th>大分類</th>
+                        <th>中分類</th>
+                        <th>小分類</th>
+                        <th>細分類</th>
+                        <th>勘定科目</th>
+                        <th>削除</th>
+                    </tr>
+                </thead>
+                <tbody>
+<?php
+if ($list['cnt'] < 1) {
+?>
+                    <tr>
+                        <td colspan="11">データなし</td>
+                    </tr>
+<?php
+} else {
+    $i = ($list['page'] - 1) * $list['rpp'];
+    foreach ($list['rec'] as $rec) {
+
+        $i++;
+
+        $id         = $rec['id'];
+        $ccd        = $view->str($rec['ccd']);
+        $account    = $view->str($rec['account']);
+        $item       = $view->str($rec['item']);
+        $kana       = $view->str($rec['kana']);
+        $name       = $view->str($rec['name']);
+        $vopt       = $view->validSelect($rec['valid_flg']);
+        $delete_flg = $view->str($rec['delete_flg']);
+        $edit_flg   = $view->str($rec['edit_flg']);
+        $kcd        = sprintf('%08d', $rec['ccd'] * 10000 + $rec['account'] * 100 + $rec['item']);
+        $c1         = substr($kcd, 0, 1);
+        $c2         = substr($kcd, 1, 1);
+        $c3         = substr($kcd, 2, 1);
+        $c4         = substr($kcd, 3, 1);
+        $acname     = $view->str($acitm[$rec['ccd']][$rec['account']]);
+?>
+                    <tr>
+<?php
+        if ($rec['ccd'] == '0') {
+?>
+                        <td>&nbsp;</td>
+<?php
+        } else {
+?>
+                        <td style="text-align: center;">
+<?php
+            if ($edit_flg) {
+?>
+                            <button type="button" class="my_green" onclick="return my.edit('<?= $id ?>');">編集</button>
+<?php
+            } else {
+?>
+                            &nbsp;
+<?php
+            }
+?>
+                        </td>
+<?php
+    }
+?>
+                        <td style="text-align: right;"><?= $i ?></td>
+                        <td style="text-align: center;">
+                            <select id="v_valid_flg_<?= $id ?>" onchange="return my.use('<?= $id ?>');">
+                                <?= $vopt ?>
+                            </select>
+                        </td>
+                        <td><?= $kcd ?></td>
+                        <td><?= $name ?></td>
+<?php
+        if ($rec['ccd'] == '0') {
+?>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+<?php
+        } else {
+?>
+                        <td><?= $c_c1[$c1] ?></td>
+                        <td><?= $c_c2[$c1][$c2] ?></td>
+                        <td><?= $c_c3[$c1][$c2][$c3]['name'] ?></td>
+<?php
+            if ($c4 == 0) {
+?>
+                        <td>&nbsp;</td>
+<?php
+            } else {
+?>
+                        <td><?= $c_c4[$c1][$c2][$c3][$c4] ?></td>
+<?php
+            }
+?>
+                        <td><?= $acname ?></td>
+                        <td style="text-align: center;">
+<?php
+            if ($delete_flg) {
+?>
+                            <button type="button" class="my_magenta" onclick="return my.drop('<?= $id ?>', '<?= $name ?>');">削除</button>
+<?php
+            } else {
+?>
+                            &nbsp;
+<?php
+            }
+?>
+                        </td>
+<?php
+        }
+?>
+                    </tr>
+<?php
+    }
+}
+?>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>

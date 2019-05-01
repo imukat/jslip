@@ -1,0 +1,14 @@
+<?php
+/**
+ * @link      https://datagram.co.jp/source/bksj for the canonical source repository
+ * @copyright Copyright (c) 2006-2019 Datagram Ltd. (https://datagram.co.jp)
+ * @license   https://datagram.co.jp/source/bksj/license.txt
+ */
+?>
+            <br>
+            <footer id="my_footer">
+                <p>JSlip Ver.2.1 &copy; 2007 - <?= date('Y') ?> by Datagram Ltd. All rights reserved.</p>
+            </footer>
+        </div>
+    </body>
+</html>
