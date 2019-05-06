@@ -104,7 +104,7 @@ class tex_tmplt
         $pprof  = $this->dat["pprof"];
         $ploss  = $this->dat["ploss"];
         $profit = $this->dat["profit"];
-        $xval   = $profit - $tax1 - $tax2 + $pprof - $ploss;
+        $xval   = $profit - $tax1 - $tax2 + $pprof + $ploss;
         $xnam   = ($xval < 0) ? "当期未処分損失" : "当期未処分利益";
 
         $m      = $d[$n]["m"];
