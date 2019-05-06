@@ -238,7 +238,7 @@ class tex_tmplt
         $ploss  = $this->dat["ploss"];
         $profit = $this->dat["profit"];
         $prof2  = $profit - $tax1 - $tax2;
-        $x      = $pprof - $ploss;
+        $x      = $pprof + $ploss;
         $y      = $x + $prof2;
         $nam1   = ($x < 0) ? "期首繰越損失" : "期首繰越利益";
         $nam2   = ($y < 0) ? "当期未処分損失" : "当期未処分利益";
