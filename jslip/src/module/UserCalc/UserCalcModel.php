@@ -127,8 +127,8 @@ class UserCalcModel extends Model
                  .   " `s`.`credit`"       . " AS `credit`,"         // 貸方科目
                  .   " `i1`.`name`"        . " AS `debit_name`,"     // 借方科目名
                  .   " `i2`.`name`"        . " AS `credit_name`,"    // 貸方科目名
-                 .   " CAST((`s`.`debit`  / 100) AS SIGNED)" . " AS `debit_account`,"  // 借方勘定科目
-                 .   " CAST((`s`.`credit` / 100) AS SIGNED)" . " AS `credit_account`," // 貸方勘定科目
+                 .   " CAST(TRUNCATE(`s`.`debit`  / 100, 0) AS SIGNED)" . " AS `debit_account`,"  // 借方勘定科目
+                 .   " CAST(TRUNCATE(`s`.`credit` / 100, 0) AS SIGNED)" . " AS `credit_account`," // 貸方勘定科目
                  .   " CASE"
                  .     " WHEN `s`.`debit` = 0 THEN 0 ELSE `s`.`amount`"
                  .   " END "               . " AS `debit_amount`,"   // 借方金額
@@ -172,7 +172,7 @@ class UserCalcModel extends Model
                  .   " `i`.`ccd`"       . " AS `ccd`,"
                  .   " `i`.`account`"   . " AS `account`,"
                  .   " `i`.`item`"      . " AS `item`,"
-                 .   " CAST((`i`.`kcd` / 100) AS SIGNED)" . " AS `account_cd`,"
+                 .   " CAST(TRUNCATE(`i`.`kcd` / 100, 0) AS SIGNED)" . " AS `account_cd`,"
                  .   " `i`.`kcd`"       . " AS `item_cd`,"
                  .   " `a`.`item_ccd`"  . " AS `account_ccd`,"
                  .   " `a`.`division`"  . " AS `division`"
@@ -705,8 +705,8 @@ class UserCalcModel extends Model
                  .     " THEN (`a`.`debit_amount`  - `a`.`credit_amount`) + (`b`.`debit_sum`  - `b`.`credit_sum`)"
                  .     " ELSE (`a`.`credit_amount` - `a`.`debit_amount` ) + (`b`.`credit_sum` - `b`.`debit_sum` )"
                  .   " END                 AS `remain`"
-                 .  ", CAST((`a`.`item` / 100000) AS SIGNED) * 10  AS `ctg3`"
-                 .  ", CAST((`a`.`item` /  10000) AS SIGNED)       AS `ctg4`"
+                 .  ", CAST(TRUNCATE(`a`.`item` / 100000, 0) AS SIGNED) * 10  AS `ctg3`"
+                 .  ", CAST(TRUNCATE(`a`.`item` /  10000, 0) AS SIGNED)       AS `ctg4`"
                  . " FROM"
                  .   " `w_tb_a` `a` LEFT JOIN `w_tb_b` `b` ON (`a`.`item` = `b`.`item` AND `a`.`m` = `b`.`m`)"
                  . " WHERE"
@@ -735,11 +735,11 @@ class UserCalcModel extends Model
                  .  ", `c`.`m` % 100              AS `mm`"
                  .  ", `c`.`division`             AS `division`"
                  .  ", `i`.`div`                  AS `ctg_div`"
-                 .  ", CAST((`c`.`ctg3` / 1000) AS SIGNED) * 1000 AS `ctg1`"
-                 .  ", CAST((`c`.`ctg3` /  100) AS SIGNED) *  100 AS `ctg2`"
+                 .  ", CAST(TRUNCATE(`c`.`ctg3` / 1000, 0) AS SIGNED) * 1000 AS `ctg1`"
+                 .  ", CAST(TRUNCATE(`c`.`ctg3` /  100, 0) AS SIGNED) *  100 AS `ctg2`"
                  .  ", `c`.`ctg3`                 AS `ctg3`"
                  .  ", `c`.`ctg4`                 AS `ctg4`"
-                 .  ", CAST((`c`.`item` /  100) AS SIGNED) %  100 AS `ctg5`"
+                 .  ", CAST(TRUNCATE(`c`.`item` /  100, 0) AS SIGNED) %  100 AS `ctg5`"
                  . " FROM"
                  .   " `w_tb_c` `c` INNER JOIN `w_aicd` `i` ON `c`.`ctg3` = `i`.`ctg`"
                  . " WHERE"
