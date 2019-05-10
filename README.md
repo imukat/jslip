@@ -27,7 +27,7 @@ Double-entry bookkeeping tool
 
 	Create Schema. For example, **jslipdb**.
 
-* Prepare a secret keywords
+* Prepare a secret keyword
 
 	For example, **ndvjksahdCSkdd**.
 
