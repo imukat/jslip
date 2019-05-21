@@ -311,7 +311,7 @@ $btn_atr2 = 'class="my_cyan" style="width: 430px; height: 30px;"';
                     ファイル：<br>
                     <input type="file" name="upfile" size="30" /><br />
                     <br />
-                    <input type="submit" value="アップロード" />
+                    <input type="submit" value="インポート" />
                 </form>
             </div>
             <div class="modal-footer">

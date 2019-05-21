@@ -270,7 +270,12 @@ $lines = 3;
                 }
             })
             .done((data) => {
-                this.ans = {"sts": "OK", "err": ""};
+                eval( 'var dat =' + data );
+                if (dat.sts == 'NG') {
+                    this.ans = {"sts": "NG", "err": dat.err};
+                } else {
+                    this.ans = {"sts": "OK", "err": ""};
+                }
             })
             .fail((data) => {
                 this.ans = {"sts": "NG", "err": "ajax error"};
